@@ -4,7 +4,7 @@ sidebar: auto
 
 # 部署
 
-部署 RSSHub 需要基本的计算机编程常识，如果您在部署过程中遇到无法解决的问题请到 [issues](https://github.com/DIYgod/RSSHub/issues) 寻找类似的问题或 [向我们提问](https://github.com/DIYgod/RSSHub/issues/new/choose)，我们会尽快给您答复
+部署 RSSHub 需要基本的计算机编程常识，如果您在部署过程中遇到无法解决的问题请到 [issues](https://github.com/DIYgod/RSSHub/issues) 寻找类似的问题或 [向我们提问](https://github.com/DIYgod/RSSHub/issues/new/choose)，我们会尽快给您答复。
 
 部署涉及到以下基本编程常识：
 
@@ -23,14 +23,19 @@ sidebar: auto
 
 ## Docker 镜像
 
-默认推荐使用`diygod/rsshub`即`diygod/rsshub:latest`最新版镜像以获取最新路由.
-当`diygod/rsshub:latest`存在问题时，可以使用以日期为标签的近期镜像临时使用，例如:
+默认推荐使用 `diygod/rsshub` 即 `diygod/rsshub:latest` 最新版镜像以获取最新路由。
+
+当 `diygod/rsshub:latest` 存在问题时，可以使用以日期为标签的近期镜像临时使用，例如:
 
 ```bash
 $ docker pull diygod/rsshub:2021-06-18
 ```
 
-待最新镜像更新后在切换回`diygod/rsshub:latest`最新版镜像.
+待最新镜像更新后再切换回 `diygod/rsshub:latest` 最新版镜像。
+
+如需启用 puppeteer，可使用 `diygod/rsshub:chromium-bundled`；若指定日期则为 `diygod/rsshub:chromium-bundled-2021-06-18`。
+
+亦可使用 Docker Compose 部署以启用 puppeteer，但更消耗磁盘空间和内存。通过修改 `docker-compose.yml`，也可以使用 `diygod/rsshub:chromium-bundled`，这样就没有更消耗资源的问题了。
 
 ## Docker Compose 部署
 
@@ -39,7 +44,13 @@ $ docker pull diygod/rsshub:2021-06-18
 下载 [docker-compose.yml](https://github.com/DIYgod/RSSHub/blob/master/docker-compose.yml)
 
 ```bash
-wget https://raw.githubusercontent.com/DIYgod/RSSHub/master/docker-compose.yml
+$ wget https://raw.githubusercontent.com/DIYgod/RSSHub/master/docker-compose.yml
+```
+
+检查有无需要修改的配置
+
+```bash
+$ vi docker-compose.yml  # 也可以是你喜欢的编辑器
 ```
 
 创建 volume 持久化 Redis 缓存
@@ -75,6 +86,12 @@ $ docker pull diygod/rsshub
 修改 [docker-compose.yml](https://github.com/DIYgod/RSSHub/blob/master/docker-compose.yml) 中的 `environment` 进行配置
 
 ## Docker 部署
+
+::: tip 提示
+
+如需启用 puppeteer，请在**每条**命令中均将 `diygod/rsshub` 替换为 `diygod/rsshub:chromium-bundled`。
+
+:::
 
 ### 安装
 
@@ -119,7 +136,7 @@ $ docker rm rsshub
 $ docker run -d --name rsshub -p 1200:1200 -e CACHE_EXPIRE=3600 -e GITHUB_ACCESS_TOKEN=example diygod/rsshub
 ```
 
-该部署方式不包括 puppeteer 和 redis 依赖，如有需要请改用 Docker Compose 部署方式或自行部署外部依赖
+该部署方式不包括 puppeteer（除非改用 `diygod/rsshub:chromium-bundled`）和 redis 依赖，如有需要请改用 Docker Compose 部署方式或自行部署外部依赖
 
 更多配置项请看 [#配置](#pei-zhi)
 
@@ -167,16 +184,16 @@ $ cd RSSHub
 
 下载完成后，需要安装依赖（开发不要加 `--production` 参数）
 
-使用 `npm`
-
-```bash
-$ npm ci --production
-```
-
-或 `yarn`
+使用 `yarn`
 
 ```bash
 $ yarn install --production
+```
+
+或 `npm`
+
+```bash
+$ npm ci --production
 ```
 
 由于众所周知的原因，在中国使用 `npm` 下载依赖十分缓慢，建议挂一个代理或者考虑使用 [NPM 镜像](https://npm.taobao.org/)
@@ -186,13 +203,13 @@ $ yarn install --production
 然后在 `RSSHub` 文件夹中运行下面的命令就可以启动
 
 ```bash
-$ npm start
+$ yarn start
 ```
 
 或
 
 ```bash
-$ yarn start
+$ npm start
 ```
 
 或使用 [PM2](https://pm2.keymetrics.io/docs/usage/quick-start/)
@@ -207,18 +224,40 @@ $ pm2 start lib/index.js --name rsshub
 
 ### 添加配置
 
+::: tip 提示
+
+在 arm/arm64 上，此部署方式不包含 puppeteer 依赖。要启用 puppeteer，你需要先从发行版安装 Chromium，然后设置 `CHROMIUM_EXECUTABLE_PATH` 为其可执行路径。
+
+Debian:
+
+```bash
+$ apt install chroium
+$ echo >> .env
+$ echo 'CHROMIUM_EXECUTABLE_PATH=chromium' >> .env
+```
+
+Ubuntu/Raspbian:
+
+```bash
+$ apt install chromium-browser
+$ echo >> .env
+$ echo 'CHROMIUM_EXECUTABLE_PATH=chromium-browser' >> .env
+```
+
+:::
+
 可以通过设置环境变量来配置 RSSHub
 
 在项目根目录新建一个 `.env` 文件，每行以 `NAME=VALUE` 格式添加环境变量，例如
 
 ```env
-    CACHE_TYPE=redis
-    CACHE_EXPIRE=600
+CACHE_TYPE=redis
+CACHE_EXPIRE=600
 ```
 
 注意它不会覆盖已有的环境变量，更多规则请参考 [dotenv](https://github.com/motdotla/dotenv)
 
-该部署方式不包括 puppeteer 和 redis 依赖，如有需要请改用 Docker Compose 部署方式或自行部署外部依赖
+该部署方式不包括 redis 依赖，如有需要请改用 Docker Compose 部署方式或自行部署外部依赖
 
 更多配置项请看 [#配置](#pei-zhi)
 
@@ -248,9 +287,15 @@ in pkgs.stdenv.mkDerivation {
 
 ## 部署到 Heroku
 
-### 注意：
+### 注意
 
-未验证支付方式的 heroku 账户每月仅有 550 小时额度（约 23 天），验证支付方式后可达每月 1000 小时。
+::: warning 更新
+
+Heroku [不再](https://blog.heroku.com/next-chapter) 提供免费服务。
+
+:::
+
+~~未验证支付方式的 heroku 账户每月仅有 550 小时额度（约 23 天），验证支付方式后可达每月 1000 小时。~~
 
 ### 一键部署（无自动更新）
 
@@ -374,7 +419,9 @@ gcloud app deploy
 
 `REQUEST_TIMEOUT`: 请求超时毫秒数，默认 `3000`
 
-`UA`: 用户代理，默认 `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36`
+`UA`: 用户代理，默认为随机用户代理用户代理（macOS 上的 Chrome）
+
+`NO_RANDOM_UA`: 是否禁用随机用户代理，默认 `null`
 
 ### 跨域请求
 
@@ -391,6 +438,8 @@ RSSHub 支持 `memory` 和 `redis` 两种缓存方式
 `CACHE_CONTENT_EXPIRE`: 内容缓存过期时间，每次访问会重新计算过期时间，单位为秒，默认 `1 * 60 * 60`
 
 `REDIS_URL`: Redis 连接地址（redis 缓存类型时有效），默认为 `redis://localhost:6379/`
+
+`MEMORY_MAX`: 最大缓存数量（memory 缓存类型时有效），默认 `256`
 
 ### 代理配置
 
@@ -486,19 +535,57 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
 
 `SENTRY_ROUTE_TIMEOUT`: 路由耗时超过此毫秒值上报 Sentry，默认 `3000`
 
+### 图片处理
+
+::: tip 新配置方式
+
+我们正在试验新的，更灵活的配置方式。如果有需要，请转到 [通用参数 -> 多媒体处理](/parameter.html#duo-mei-ti-chu-li) 了解更多。
+
+在使用新配置时，请将下方环境变量留空。否则默认图片模版会继续遵循下方配置。
+
+:::
+
+`HOTLINK_TEMPLATE`: 用于处理描述中图片的 URL，绕过防盗链等限制，留空不生效。用法参考 [#2769](https://github.com/DIYgod/RSSHub/issues/2769)。可以使用 [URL](https://developer.mozilla.org/en-US/docs/Web/API/URL#Properties) 的所有属性（加上后缀 `_ue` 则会对其进行 URL 编码），格式为 JS 变量模板。例子：`${protocol}//${host}${pathname}`, `https://i3.wp.com/${host}${pathname}`, `https://images.weserv.nl?url=${href_ue}`
+
+`HOTLINK_INCLUDE_PATHS`: 限制需要处理的路由，只有匹配成功的路由会被处理，设置多项时用英文逗号 `,` 隔开。若不设置，则所有路由都将被处理
+
+`HOTLINK_EXCLUDE_PATHS`: 排除不需处理的路由，所有匹配成功的路由都不被处理，设置多项时用英文逗号 `,` 隔开。可单独使用，也可用于排除已被前者包含的路由。若不设置，则没有任何路由会被过滤
+
+::: tip 路由匹配模式
+
+`HOTLINK_INCLUDE_PATHS` 和 `HOTLINK_EXCLUDE_PATHS` 均匹配路由根路径及其所有递归子路径，但并非子字符串匹配。注意必须以 `/` 开头，且结尾不需要 `/`。
+
+例：`/example`, `/example/sub` 和 `/example/anthoer/sub/route` 均可被 `/example` 匹配，但 `/example_route` 不会被匹配。
+
+也可带有路由参数，如 `/weibo/user/2612249974` 也是合法的。
+
+:::
+
+### 功能特性
+
+::: tip 测试特性
+
+这个板块控制的是一些新特性的选项，默认他们都是关闭的。如果有需要请阅读对应说明后按需开启
+
+:::
+
+`ALLOW_USER_HOTLINK_TEMPLATE`: [通用参数 -> 多媒体处理](/parameter.html#duo-mei-ti-chu-li)特性控制
+
+`FILTER_REGEX_ENGINE`: 控制 [通用参数 -> 内容过滤](/parameter.html#nei-rong-guo-lu) 使用的正则引擎。可选`[re2, regexp]`，默认`re2`。我们推荐公开实例不要调整这个选项，这个选项目前主要用于向后兼容。
+
 ### 其他应用配置
 
 `DISALLOW_ROBOT`: 阻止搜索引擎收录，默认开启，设置 false 或 0 关闭
 
 `ENABLE_CLUSTER`: 是否开启集群模式，默认 `false`
 
-`HOTLINK_TEMPLATE`: 用于处理描述中图片的链接，绕过防盗链等限制，留空不生效。用法参考 [#2769](https://github.com/DIYgod/RSSHub/issues/2769)。可以使用 [URL](https://developer.mozilla.org/en-US/docs/Web/API/URL#Properties) 的所有属性，格式为 JS 变量模板。例子：`${protocol}//${host}${pathname}`, `https://i3.wp.com/${host}${pathname}`
-
 `NODE_ENV`: 是否显示错误输出，默认 `production` （即关闭输出）
 
 `NODE_NAME`: 节点名，用于负载均衡，识别当前节点
 
-`PUPPETEER_WS_ENDPOINT`: 用于 puppeteer.connect 的浏览器 websocket 链接，见 [browserWSEndpoint](hhttps://zhaoqize.github.io/puppeteer-api-zh_CN/#?product=Puppeteer\&show=api-browserwsendpoint)
+`PUPPETEER_WS_ENDPOINT`: 用于 puppeteer.connect 的浏览器 websocket 链接，见 [browserWSEndpoint](https://zhaoqize.github.io/puppeteer-api-zh_CN/#?product=Puppeteer\&show=api-browserwsendpoint)
+
+`CHROMIUM_EXECUTABLE_PATH`: Chromium（或 Chrome）的可执行路径。若 puppeteer 没有下载捆绑的 Chromium（主动跳过下载或体系架构为 arm/arm64），设置此项可启用 puppeteer。或者，偏好 Chrome 而不是 Chromium 时，此项也很有用。**注意**：`PUPPETEER_WS_ENDPOINT` 被设置时，此项不生效；仅在手动部署时有用，对于 Docker 部署，请改用 `chromium-bundled` 版本镜像。
 
 `TITLE_LENGTH_LIMIT`: 限制输出标题的字节长度，一个英文字符的长度为 1 字节，部分语言如中文，日文，韩文或阿拉伯文等，统一算作 2 字节，默认 `150`
 
@@ -524,6 +611,11 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
         2.  打开控制台，切换到 Network 面板，刷新
         3.  点击 dynamic_new 请求，找到 Cookie
         4.  视频和专栏只要求 `SESSDATA` 字段，动态需复制整段 Cookie
+
+-   Bitbucket: [Basic auth with App passwords](https://developer.atlassian.com/cloud/bitbucket/rest/intro/#basic-auth)
+
+    -   `BITBUCKET_USERNAME`: 你的 Bitbucket 用户名
+    -   `BITBUCKET_PASSWORD`: 你的 Bitbucket 密码
 
 -   BTBYR
 
@@ -556,9 +648,15 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
     -   `EH_IPB_MEMBER_ID`: E-Hentai 账户登录后 cookie 的 `ipb_member_id` 值
     -   `EH_IPB_PASS_HASH`: E-Hentai 账户登录后 cookie 的 `ipb_pass_hash` 值
     -   `EH_SK`: E-Hentai 账户登录后 cookie 中的`sk`值
-    -   `EH_IGNEOUS`: ExHentai 账户登录后 cookie 中的`igneous`值。若设置此值，RSS 数据将全部从里站获取，`EH_SK`将被忽略
+    -   `EH_IGNEOUS`: ExHentai 账户登录后 cookie 中的`igneous`值。若设置此值，RSS 数据将全部从里站获取
+    -   `EH_STAR`: E-Hentai 账户获得捐赠等级后将出现该 cookie。若设置此值，图片访问量限制将与账号关联而非 IP 地址
+    -   `EH_IMG_PROXY`: 封面代理访问地址。若设置此值，封面图链接将被替换为以此值开头。使用 ExHentai 时，封面图需要有 Cookie 才能访问，在一些阅读软件上没法显示封面，可以使用此值搭配一个加 Cookie 的代理服务器实现阅读软件无 Cookie 获取封面图。
 
--   github 全部路由：[申请地址](https://github.com/settings/tokens)
+-   Gitee 全部路由：[申请地址](https://gitee.com/api/v5/swagger)
+
+    -   `GITEE_ACCESS_TOKEN`: Gitee 私人令牌
+
+-   GitHub 全部路由：[申请地址](https://github.com/settings/tokens)
 
     -   `GITHUB_ACCESS_TOKEN`: GitHub Access Token
 
@@ -566,13 +664,17 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
 
     -   `GOOGLE_FONTS_API_KEY`: API key
 
--   Instagram：
+-   Instagram:
 
     -   `IG_USERNAME`: Instagram 用户名。
     -   `IG_PASSWORD`: Instagram 密码。
     -   `IG_PROXY`: Instagram 代理 URL。
 
     注意，暂**不支持**两步验证。
+
+-   Iwara:
+
+    -   `IWARA_COOKIE`: Iwara 登录后的 Cookie 值
 
 -   Last.fm 全部路由：[申请地址](https://www.last.fm/api/)
 
@@ -594,10 +696,14 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
     -   `NGA_PASSPORT_UID`: 对应 cookie 中的 `ngaPassportUid`.
     -   `NGA_PASSPORT_CID`: 对应 cookie 中的 `ngaPassportCid`.
 
--   nhentai torrent: [注册地址](https://nhentai.net/register/)
+-   nhentai torrent：[注册地址](https://nhentai.net/register/)
 
     -   `NHENTAI_USERNAME`: nhentai 用户名或邮箱
     -   `NHENTAI_PASSWORD`: nhentai 密码
+
+-   pianyuan 全部路由：[注册地址](https://pianyuan.org)
+
+    -   `PIANYUAN_COOKIE`: 对应 cookie 中的 `py_loginauth`, 例: PIANYUAN_COOKIE='py_loginauth=xxxxxxxxxx'
 
 -   pixiv 全部路由：[注册地址](https://accounts.pixiv.net/signup)
 
@@ -615,23 +721,24 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
 
     -   `SCIHUB_HOST`: 可访问的 sci-hub 镜像地址，默认为 `https://sci-hub.se`。
 
--   spotify 全部路由： [注册地址](https://developer.spotify.com)
+-   Spotify 全部路由：[注册地址](https://developer.spotify.com)
 
-    -   `SPOTIFY_CLIENT_ID`：Spotify 应用的 client ID
-    -   `SPOTIFY_CLIENT_SECRET`：Spotify 应用的 client secret
+    -   `SPOTIFY_CLIENT_ID`: Spotify 应用的 client ID
+    -   `SPOTIFY_CLIENT_SECRET`: Spotify 应用的 client secret
 
--   spotify 用户相关路由
+-   Spotify 用户相关路由
 
     -   `SPOTIFY_REFRESHTOKEN`：用户在此 Spotify 应用的 refresh token。可以利用 [此 gist](https://gist.github.com/outloudvi/d1bbeb5e989db5385384a223a7263744) 获取。
 
--   telegram - 贴纸包路由：[Telegram 机器人](https://telegram.org/blog/bot-revolution)
+-   Telegram - 贴纸包路由：[Telegram 机器人](https://telegram.org/blog/bot-revolution)
 
     -   `TELEGRAM_TOKEN`: Telegram 机器人 token
 
--   twitter 全部路由：[申请地址](https://apps.twitter.com)
+-   Twitter 全部路由：[申请地址](https://apps.twitter.com)
 
-    -   `TWITTER_CONSUMER_KEY`: Twitter API key，支持多个 key，用英文逗号 `,` 隔开
-    -   `TWITTER_CONSUMER_SECRET`: Twitter API key secret，支持多个 key，用英文逗号 `,` 隔开，顺序与 key 对应
+    -   `TWITTER_CONSUMER_KEY`: Twitter Developer API key，支持多个 key，用英文逗号 `,` 隔开
+    -   `TWITTER_CONSUMER_SECRET`: Twitter Developer API key secret，支持多个 key，用英文逗号 `,` 隔开，顺序与 key 对应
+    -   `TWITTER_WEBAPI_AUTHORIZAION`: Twitter Web API authorization。如果上述两个环境变量中的任意一个未设置，就会使用 Twitter Web API。然而，没有必要设置这个环境变量，因为所有用户和访客共享同一个 authorization token 且已经内置于 RSSHub 之中。
     -   `TWITTER_TOKEN_{handler}`: 对应 Twitter 用户名生成的 token，`{handler}` 替换为用于生成该 token 的 Twitter 用户名，值为 `Twitter API key, Twitter API key secret, Access token, Access token secret` 用逗号隔开，例如：`TWITTER_TOKEN_RSSHub=bX1zry5nG4d1RbESQbnADpVIo,2YrD8qo9sXbB8VlYfVmo1Qtw0xsexnOliU5oZofq7aPIGou0Xx,123456789-hlkUHFYmeXrRcf6SEQciP8rP4lzmRgMgwdqIN9aK,pHcPnfa28rCIKhSICUCiaw9ppuSSl7T2f3dnGYpSM0bod`
 
 -   Wordpress
@@ -646,9 +753,14 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
         | <https://cors.netnr.workers.dev/>        | cloudflare   |
         | <https://netnr-proxy.openode.io/>        | digitalocean |
 
--   youtube 全部路由：[申请地址](https://console.developers.google.com/)
+-   YouTube：[申请地址](https://console.developers.google.com/)
 
-    -   `YOUTUBE_KEY`: YouTube API Key，支持多个 key，用英文逗号 `,` 隔开
+    -   全部路由
+        -   `YOUTUBE_KEY`: YouTube API Key，支持多个 key，用英文逗号 `,` 隔开
+    -   订阅列表路由额外设置
+        -   `YOUTUBE_CLIENT_ID`: YouTube API 的 OAuth 2.0 客户端 ID
+        -   `YOUTUBE_CLIENT_SECRET`: YouTube API 的 OAuth 2.0 客户端 Secret
+        -   `YOUTUBE_REFRESH_TOKEN`: YouTube API 的 OAuth 2.0 客户端 Refresh Token。可以按照[此 gist](https://gist.github.com/Kurukshetran/5904e8cb2361623498481f4a9a1338aa) 获取。
 
 -   北大未名 BBS 全站十大
 
@@ -693,6 +805,10 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
     -   `FANFOU_USERNAME`: 饭否登录用户名、邮箱、手机号
     -   `FANFOU_PASSWORD`: 饭否密码
 
+-   和风天气：[申请地址](https://id.qweather.com/#/register?redirect=https%3A%2F%2Fconsole.qweather.com)
+
+    -   `HEFENG_KEY`:API key
+
 -   南方周末付费全文
 
     -   `INFZM_COOKIE`: infzm 账户登陆后的 cookie，目前只需要 `passport_session=...` 即可获取全文
@@ -707,7 +823,7 @@ RSSHub 支持使用访问密钥 / 码，白名单和黑名单三种方式进行�
 
 -   邮箱 邮件列表路由：
 
-    -   `EMAIL_CONFIG_{email}`: 邮箱设置，替换 `{email}` 为 邮箱账号，邮件账户的 `@` 替换为 `.`，例如 `EMAIL_CONFIG_xxx.qq.com`。Linux 内容格式为 `password=密码&host=服务器&port=端口`，docker 内容格式为 `password=密码\&host=服务器\&port=端口`，例如：
+    -   `EMAIL_CONFIG_{email}`: 邮箱设置，替换 `{email}` 为 邮箱账号，邮件账户的 `@` 与 `.` 替换为 `_`，例如 `EMAIL_CONFIG_xxx_qq_com`。Linux 内容格式为 `password=密码&host=服务器&port=端口`，docker 内容格式为 `password=密码\&host=服务器\&port=端口`，例如：
         -   Linux 环境变量：`EMAIL_CONFIG_xxx_qq_com="password=123456&host=imap.qq.com&port=993"`
         -   docker 环境变量：`EMAIL_CONFIG_xxx_qq_com=password=123456\&host=imap.qq.com\&port=993`，请勿添加引号 `'`，`"`。
 
